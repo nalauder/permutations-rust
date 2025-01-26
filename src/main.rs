@@ -1,10 +1,21 @@
+use std::fs::File;
+use std::io::prelude::*;
+
+
 fn main() {
     let charset: [char; 62] = get_charset();
-    println!("{:?}", iterate(charset, 2));
+    let mut file = File::create("./output/res.txt").expect("Error creating file");
+    
+    iterate(charset, 3, &mut file);
 }
 
-fn iterate<const A: usize>(charset: [char; A], max_length: usize) -> Vec<Vec<char>> {
-    let mut results: Vec<Vec<char>> = Vec::new(); // Vec to hold all permutations
+// fn recursive<T, const A:usize>(index: usize, max_length: usize, charset: [T; A], permutations: Vec<String>) -> Vec<String> {
+//     let mut permutations: Vec<String>;
+//     return permutations;
+
+// }
+
+fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut File) {
     let mut permutation: Vec<char> = vec!['0'; max_length]; // Vec of length `max_length` to hold the current working permutation
     let mut tracker: Vec<usize> = vec![0; max_length]; // Helper vec to keep track of the index of each character permuation
 
@@ -15,8 +26,10 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize) -> Vec<Vec<cha
         permutation[line_i] = charset[tracker[line_i]]; // Sets the current permutation character based on the tracker value
 
         if line_i == max_length - 1 {
-            // If this is a complete permutation, push the it and increment the character tracker index
-            results.push(permutation.clone());
+            // If this is a complete permutation, write it to file and increment the character tracker index
+            write!(file, "{}\n", Vec::from_iter(permutation.iter().map(|i| i.to_string())).join("")).expect("Failed to write");
+
+            // results.push(permutation.clone());
             tracker[line_i] += 1;
         } else {
             // Othewise start working with the next character position
@@ -37,16 +50,7 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize) -> Vec<Vec<cha
             }
         }
     }
-
-    return results;
 }
-
-// fn recursive<T, const A:usize>(index: usize, max_length: usize, charset: [T; A], permutations: Vec<String>) -> Vec<String> {
-//     let mut permutations: Vec<String>;
-//     return permutations;
-
-// }
-
 
 fn concat_arrays<T, const A: usize, const B: usize, const C: usize>(
     a: [T; A],
