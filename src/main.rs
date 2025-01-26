@@ -1,12 +1,37 @@
+use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
-
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let max_length = args[1].parse::<usize>().expect("Failed to parse length");
+    let mut do_iterate = true;
+    let mut incremental = false;
+    let mut filepath: &str = "./output/res.txt";
+
+    for i in 2..args.len() {
+        match args[i].as_str() {
+            "-r" => do_iterate = false, // Toggles iterative or recusrive methods
+            "-i" => incremental = true, // Toggles whether just to create permutations of max length, or include all lengths from 0 to max length
+            "-f" => filepath = args[i + 1].as_str(),
+            _ => (),
+        }
+    }
+
     let charset: [char; 62] = get_charset();
-    let mut file = File::create("./output/res.txt").expect("Error creating file");
-    
-    iterate(charset, 3, &mut file);
+    let mut file = File::create(filepath).expect("Error creating file");
+
+    if do_iterate {
+        if incremental {
+            for i in 1..max_length + 1 {
+                iterate(charset, i, &mut file);
+            }
+        } else {
+            iterate(charset, max_length, &mut file);
+        }
+    } else {
+        panic!("Recursive not yet implemented");
+    }
 }
 
 // fn recursive<T, const A:usize>(index: usize, max_length: usize, charset: [T; A], permutations: Vec<String>) -> Vec<String> {
@@ -25,7 +50,12 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
 
         if line_i == max_length - 1 {
             // If this is a complete permutation, write it to file and increment the character tracker index
-            write!(file, "{}\n", Vec::from_iter(permutation.iter().map(|i| i.to_string())).join("")).expect("Failed to write");
+            write!(
+                file,
+                "{}\n",
+                Vec::from_iter(permutation.iter().map(|i| i.to_string())).join("")
+            )
+            .expect("Failed to write");
 
             // results.push(permutation.clone());
             tracker[line_i] += 1;
