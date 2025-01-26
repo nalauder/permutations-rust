@@ -20,9 +20,7 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
     let mut tracker: Vec<usize> = vec![0; max_length]; // Helper vec to keep track of the index of each character permuation
 
     let mut line_i: usize = 0;
-    let mut underway: bool = true;
-
-    while underway {
+    'primary: loop {
         permutation[line_i] = charset[tracker[line_i]]; // Sets the current permutation character based on the tracker value
 
         if line_i == max_length - 1 {
@@ -42,7 +40,7 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
 
             if line_i == 0 {
                 // If we stack all the way back to the first line, generation has completed
-                underway = false;
+                break 'primary;
             } else {
                 // Step back a character position and increment the new character position index
                 line_i -= 1;
