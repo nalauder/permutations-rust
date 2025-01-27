@@ -1,8 +1,8 @@
 use std::env;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::{prelude::*, BufWriter};
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() <= 1 {
         panic!("Missing length argument");
@@ -23,19 +23,20 @@ fn main() {
     }
 
     let charset: [char; 62] = get_charset();
-    let mut file = File::create(filepath).expect("Error creating file");
+    let mut file = BufWriter::new(File::create(filepath).unwrap());
 
     if do_iterate {
         if incremental {
             for i in 1..max_length + 1 {
-                iterate(charset, i, &mut file);
+                iterate(charset, i, &mut file)?;
             }
         } else {
-            iterate(charset, max_length, &mut file);
+            iterate(charset, max_length, &mut file)?;
         }
     } else {
         panic!("Recursive not yet implemented");
     }
+    Ok(())
 }
 
 // fn recursive<T, const A:usize>(index: usize, max_length: usize, charset: [T; A], permutations: Vec<String>) -> Vec<String> {
@@ -44,7 +45,11 @@ fn main() {
 
 // }
 
-fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut File) {
+fn iterate<const CHARSET_SIZE: usize>(
+    charset: [char; CHARSET_SIZE],
+    max_length: usize,
+    file: &mut BufWriter<File>,
+) -> std::io::Result<()> {
     let mut permutation: Vec<char> = vec!['0'; max_length]; // Vec of length `max_length` to hold the current working permutation
     let mut tracker: Vec<usize> = vec![0; max_length]; // Helper vec to keep track of the index of each character permuation
 
@@ -54,14 +59,10 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
 
         if line_i == max_length - 1 {
             // If this is a complete permutation, write it to file and increment the character tracker index
-            write!(
-                file,
-                "{}\n",
-                Vec::from_iter(permutation.iter().map(|i| i.to_string())).join("")
-            )
-            .expect("Failed to write");
-
-            // results.push(permutation.clone());
+            for char in &permutation {
+                write!(file, "{}", char)?;
+            }
+            write!(file, "\n")?;
             tracker[line_i] += 1;
         } else {
             // Othewise start working with the next character position
@@ -69,7 +70,7 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
         }
 
         // While loop to track back character positions for every character that is the last in the character set
-        while tracker[line_i] == A {
+        while tracker[line_i] == CHARSET_SIZE {
             tracker[line_i] = 0;
 
             if line_i == 0 {
@@ -82,6 +83,7 @@ fn iterate<const A: usize>(charset: [char; A], max_length: usize, file: &mut Fil
             }
         }
     }
+    Ok(())
 }
 
 fn concat_arrays<T, const A: usize, const B: usize, const C: usize>(
@@ -93,7 +95,7 @@ fn concat_arrays<T, const A: usize, const B: usize, const C: usize>(
     std::array::from_fn(|_| iter.next().unwrap())
 }
 
-fn get_charset<const A: usize>() -> [char; A] {
+fn get_charset<const SIZE: usize>() -> [char; SIZE] {
     const LOWER: [char; 26] = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
