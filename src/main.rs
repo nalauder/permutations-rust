@@ -3,24 +3,7 @@ use std::fs::File;
 use std::io::{prelude::*, BufWriter};
 
 fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() <= 1 {
-        panic!("Missing length argument");
-    }
-
-    let max_length = args[1].parse::<usize>().expect("Failed to parse length");
-    let mut do_iterate = true;
-    let mut incremental = false;
-    let mut filepath: &str = "./output/res.txt";
-
-    for i in 2..args.len() {
-        match args[i].as_str() {
-            "-r" => do_iterate = false, // Toggles iterative or recusrive methods
-            "-i" => incremental = true, // Toggles whether just to create permutations of max length, or include all lengths from 0 to max length
-            "-f" => filepath = args[i + 1].as_str(),
-            _ => (),
-        }
-    }
+    let (max_length, do_iterate, incremental, filepath) = handle_args();
 
     let charset: [char; 62] = get_charset();
     let mut file = BufWriter::new(File::create(filepath).unwrap());
@@ -108,4 +91,27 @@ fn get_charset<const SIZE: usize>() -> [char; SIZE] {
 
     let charset1: [char; 52] = concat_arrays(LOWER, UPPER);
     concat_arrays(charset1, NUMBER)
+}
+
+fn handle_args() -> (usize, bool, bool, String) {
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        panic!("Missing length argument");
+    }
+
+    let max_length = args[1].parse::<usize>().expect("Failed to parse length");
+    let mut do_iterate = true;
+    let mut incremental = false;
+    let mut filepath: &str = "./output/res.txt";
+
+    for i in 2..args.len() {
+        match args[i].as_str() {
+            "-r" => do_iterate = false, // Toggles iterative or recusrive methods
+            "-i" => incremental = true, // Toggles whether just to create permutations of max length, or include all lengths from 0 to max length
+            "-f" => filepath = &args[i + 1],
+            _ => (),
+        }
+    }
+
+    (max_length, do_iterate, incremental, filepath.to_string())
 }
