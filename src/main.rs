@@ -4,6 +4,10 @@ use std::io::prelude::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        panic!("Missing length argument");
+    }
+
     let max_length = args[1].parse::<usize>().expect("Failed to parse length");
     let mut do_iterate = true;
     let mut incremental = false;
