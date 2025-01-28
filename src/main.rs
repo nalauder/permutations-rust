@@ -17,16 +17,38 @@ fn main() -> std::io::Result<()> {
             iterate(charset, max_length, &mut file)?;
         }
     } else {
-        panic!("Recursive not yet implemented");
+        if incremental {
+            for i in 1..max_length + 1 {
+                recursive(0, 0, charset, vec!['0'; i], i, &mut file)?;
+            }
+        } else {
+            recursive(0, 0, charset, vec!['0'; max_length], max_length, &mut file)?;
+        }
+        
     }
     Ok(())
 }
 
-// fn recursive<T, const A:usize>(index: usize, max_length: usize, charset: [T; A], permutations: Vec<String>) -> Vec<String> {
-//     let mut permutations: Vec<String>;
-//     return permutations;
+fn recursive<const CHARSET_LENGTH:usize>(char_index: usize, line_index: usize, charset: [char; CHARSET_LENGTH], mut working_perm: Vec<char>, max_length: usize, file: &mut BufWriter<File>) -> std::io::Result<()> {
+    if line_index >= max_length || char_index >= CHARSET_LENGTH {
+        return Ok(());
+    }
 
-// }
+    if line_index == max_length-1 {
+        working_perm[line_index] = charset[char_index];
+        for char in &working_perm {
+            write!(file, "{}", char)?;
+        }
+        write!(file, "\n")?;
+        recursive(char_index+1, line_index, charset, working_perm, max_length, file)?;
+    } else {
+        working_perm[line_index] = charset[char_index];
+        recursive(0, line_index+1, charset, working_perm.clone(), max_length, file)?;
+        recursive(char_index+1, line_index, charset, working_perm, max_length, file)?;
+    }
+
+    Ok(())
+}
 
 fn iterate<const CHARSET_SIZE: usize>(
     charset: [char; CHARSET_SIZE],
